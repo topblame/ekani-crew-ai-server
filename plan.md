@@ -58,20 +58,27 @@ app/
 | **조장** | 1명 | 전체 서포트 | |
 | ↳ Person E | 1명 | payment/, referral/ | 남는 시간에 병목 해결 |
 
-### MBTI 테스트 (1개 페이지 - 채팅 형식)
+### MBTI 테스트 구조
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              MBTI 테스트 (1개 페이지 - 채팅 형식)              │
-├─────────────────────────────────────────────────────────────┤
-│                     질문 구성 (2가지 소스)                    │
+│                    MBTI 테스트 (2개 테스트)                   │
 ├────────────────────────────┬────────────────────────────────┤
-│   Person A 담당             │   Person B 담당                │
+│   테스트 A (하민)           │   테스트 B (대호)               │
+│   저장된 질문 기반           │   AI 질문 기반                 │
 ├────────────────────────────┼────────────────────────────────┤
-│ • 사람이 만든 일반 질문      │ • AI 프롬프트 일반 질문         │
-│ • 사람이 만든 돌발 질문      │ • AI 프롬프트 돌발 질문         │
+│ • DB에 저장된 정형 질문      │ • AI가 맥락 기반 질문 생성      │
+│ • E/I, S/N, T/F, J/P 커버   │ • 대화 흐름에 따라 동적 질문    │
 ├────────────────────────────┴────────────────────────────────┤
-│  두 타입 질문이 섞여서 채팅 테스트 구성 → MBTI 도출 → 저장     │
+│          두 테스트 각각 진행 → 결과 합산 → 정밀 MBTI 도출      │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│              돌발 질문 (앱 사용 중 간헐적 등장)                │
+├────────────────────────────┬────────────────────────────────┤
+│   사람이 만든 돌발 (하민)    │   AI가 만든 돌발 (대호)         │
+├────────────────────────────┴────────────────────────────────┤
+│    예상치 못한 질문 → 응답 분석 → MBTI 보정 (ESTJ → ISTJ)     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -120,50 +127,69 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 #### 🌟 MBTI Test Domain (핵심 - Team MBTI)
 
+> **구조**: 두 가지 테스트를 각각 진행 → 결과 합산 → 정밀도 향상
+> **돌발 질문**: 앱 사용 중 간헐적으로 등장하여 MBTI 보정
+
 ##### 공통 기반 (하민, 대호 협업)
 
 - [ ] `MBTI-1` [MBTI] 사용자로서, 채팅 형식으로 MBTI 테스트를 하고 싶다
-  - **Domain**: `MBTITestSession` (id, user_id, status, created_at)
-  - **Domain**: `MBTIMessage` (role, content, question_type, source)
-  - **Port**: `QuestionProviderPort` 인터페이스 (사람/AI 질문 제공)
-  - **API**: `POST /mbti-test/start` → 세션 시작, 첫 질문 반환
-  - **✅ 인수 조건**: 세션 생성, 질문 타입(일반/돌발) 구분3
+  - **Domain**: `MBTITestSession` (id, user_id, test_type='human'|'ai', status, created_at)
+  - **Domain**: `MBTIMessage` (role, content, source='human'|'ai')
+  - **API**: `POST /mbti-test/start?type=human|ai` → 세션 시작, 첫 질문 반환
+  - **✅ 인수 조건**: 테스트 타입별 세션 생성, 각각 독립적으로 진행
 
-##### Person A(하민): 사람이 만든 질문
+---
 
-- [ ] `MBTI-2` [MBTI] 사용자로서, 정형화된 질문에 답하고 싶다
-  - **Domain**: `HumanQuestion` (id, text, dimension, type='normal')
+##### 📋 테스트 A: 저장된 질문 기반 (하민)
+
+- [ ] `MBTI-2` [MBTI] 사용자로서, 저장된 질문에 답하며 MBTI 테스트를 하고 싶다
+  - **Domain**: `HumanQuestion` (id, text, dimension, options)
   - **Adapter**: `HumanQuestionProvider` - 질문 DB에서 조회
-  - **✅ 인수 조건**: E/I, S/N, T/F, J/P 차원별 질문셋
+  - **UseCase**: `AnswerHumanQuestionUseCase`
+  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문
+  - **✅ 인수 조건**: E/I, S/N, T/F, J/P 차원별 질문셋, 응답 저장
 
-- [ ] `MBTI-3` [MBTI] 사용자로서, 예상치 못한 질문으로 깊이있는 답변을 하고 싶다
-  - **Domain**: `HumanQuestion` (id, text, dimension, type='surprise')
-  - **✅ 인수 조건**: 간헐적 삽입, 정확도 향상용 질문셋
+---
 
-##### Person B(대호): AI 프롬프트 질문
+##### 🤖 테스트 B: AI 질문 기반 (대호)
 
-- [ ] `MBTI-4` [MBTI] 사용자로서, AI가 맥락에 맞는 질문을 해주길 원한다
+- [ ] `MBTI-3` [MBTI] 사용자로서, AI와 대화하며 MBTI 테스트를 하고 싶다
   - **Adapter**: `AIQuestionProvider` (gpt-4o-mini)
   - **Prompt**: 대화 히스토리 기반 다음 질문 생성
-  - **✅ 인수 조건**: 맥락 기반 후속 질문, MBTI 차원 커버
-
-- [ ] `MBTI-5` [MBTI] 사용자로서, AI가 예상치 못한 질문으로 깊이 파악해주길 원한다
-  - **Prompt**: 돌발 질문 생성 프롬프트
-  - **✅ 인수 조건**: 예상 못한 각도의 질문, 정확도 향상
-
-##### 공통 결과 처리 (하민, 대호 협업)
-
-- [ ] `MBTI-6` [MBTI] 사용자로서, 질문에 답하면 다음 질문이 나온다
-  - **UseCase**: `AnswerMBTIQuestionUseCase`
-  - **로직**: 사람 질문 / AI 질문 섞어서 제공
+  - **UseCase**: `AnswerAIQuestionUseCase`
   - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문
-  - **✅ 인수 조건**: 대화 히스토리 유지, 질문 타입 혼합
+  - **✅ 인수 조건**: 맥락 기반 후속 질문, MBTI 차원 커버, 응답 저장
 
-- [ ] `MBTI-7` [MBTI] 사용자로서, 5-10턴 대화 후 MBTI 결과를 받고 싶다
-  - **Domain**: `MBTIResult` (mbti, confidence, analysis)
-  - **UseCase**: `CalculateMBTIResultUseCase` - 응답 기반 분석
-  - **API 확장**: 마지막 응답에 `is_completed: true`, `result` 포함
-  - **✅ 인수 조건**: MBTI 도출, User.mbti 자동 업데이트
+---
+
+##### 🎯 결과 합산 (하민, 대호 협업)
+
+- [ ] `MBTI-4` [MBTI] 사용자로서, 두 테스트 결과를 합산한 정밀한 MBTI를 받고 싶다
+  - **Domain**: `MBTIResult` (mbti, confidence, human_score, ai_score, analysis)
+  - **UseCase**: `CalculateCombinedMBTIUseCase` - 두 테스트 결과 합산
+  - **API**: `GET /mbti-test/result` → 합산된 MBTI 결과
+  - **✅ 인수 조건**: 두 테스트 완료 후 합산, User.mbti 자동 업데이트
+
+---
+
+##### ⚡ 돌발 질문 (MBTI 보정) - 앱 사용 중 간헐적 등장
+
+- [ ] `MBTI-5` [MBTI] 사용자로서, 앱 사용 중 예상치 못한 질문을 받고 싶다 (사람 질문)
+  - **Domain**: `SurpriseQuestion` (id, text, dimension, source='human')
+  - **Adapter**: `HumanSurpriseProvider` - 돌발 질문 DB에서 조회
+  - **API**: `GET /mbti/surprise` → 랜덤 돌발 질문
+  - **✅ 인수 조건**: 간헐적 노출, 사람이 만든 신박한 질문
+
+- [ ] `MBTI-6` [MBTI] 사용자로서, 앱 사용 중 AI가 만든 예상치 못한 질문을 받고 싶다
+  - **Adapter**: `AISurpriseProvider` (gpt-4o-mini)
+  - **Prompt**: 기존 MBTI + 사용 패턴 기반 돌발 질문 생성
+  - **API**: `GET /mbti/surprise?source=ai` → AI 돌발 질문
+  - **✅ 인수 조건**: 간헐적 노출, AI가 만든 맥락 기반 질문
+
+- [ ] `MBTI-7` [MBTI] 사용자로서, 돌발 질문 응답으로 MBTI가 보정되길 원한다
+  - **UseCase**: `AdjustMBTIUseCase` - 돌발 응답 기반 MBTI 보정
+  - **API**: `POST /mbti/surprise/answer` → MBTI 보정 결과
+  - **✅ 인수 조건**: 응답 분석 후 MBTI 보정 (예: ESTJ → ISTJ)
 
 #### Matching Domain (Team Match)
 
