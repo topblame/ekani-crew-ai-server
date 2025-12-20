@@ -2,8 +2,8 @@ import uuid
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 
-from app.mbti.domain.mbti_message import MBTIMessage
-from app.mbti.domain.mbti_test_session import MBTITestSession
+from app.mbti_test.domain.mbti_message import MBTIMessage
+from app.mbti_test.domain.mbti_test_session import MBTITestSession
 
 
 class StartMBTITestCommand(BaseModel):

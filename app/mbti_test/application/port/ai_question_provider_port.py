@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from app.mbti.domain.models import AIQuestionResponse, GenerateAIQuestionCommand
+from app.mbti_test.domain.models import AIQuestionResponse, GenerateAIQuestionCommand
 
 
 class AIQuestionProviderPort(ABC):

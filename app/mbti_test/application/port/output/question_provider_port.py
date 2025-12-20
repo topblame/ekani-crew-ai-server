@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.mbti.domain.mbti_message import MBTIMessage
+from app.mbti_test.domain.mbti_message import MBTIMessage
 
 
 class QuestionProviderPort(ABC):

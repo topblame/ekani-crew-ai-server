@@ -129,7 +129,7 @@ def get_history(
             {
                 "id": session.id,
                 "created_at": session.created_at.isoformat(),
-                "mbti": session.mbti.value,
+                "mbti_test": session.mbti.value,
                 "gender": session.gender.value,
                 "analysis": session.get_analysis(),
             }

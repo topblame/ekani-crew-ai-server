@@ -1,11 +1,11 @@
-from app.mbti.application.port.input.start_mbti_test_use_case import (
+from app.mbti_test.application.port.input.start_mbti_test_use_case import (
     StartMBTITestUseCase,
     StartMBTITestCommand,
     StartMBTITestResponse,
 )
-from app.mbti.application.port.output.mbti_test_session_repository import MBTITestSessionRepositoryPort
-from app.mbti.application.port.output.question_provider_port import QuestionProviderPort
-from app.mbti.domain.mbti_test_session import MBTITestSession
+from app.mbti_test.application.port.output.mbti_test_session_repository import MBTITestSessionRepositoryPort
+from app.mbti_test.application.port.output.question_provider_port import QuestionProviderPort
+from app.mbti_test.domain.mbti_test_session import MBTITestSession
 
 
 class StartMBTITestService(StartMBTITestUseCase):

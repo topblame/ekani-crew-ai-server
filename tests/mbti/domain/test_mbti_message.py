@@ -1,4 +1,4 @@
-from app.mbti.domain.mbti_message import MBTIMessage
+from app.mbti_test.domain.mbti_message import MBTIMessage
 
 
 def test_create_mbti_message():

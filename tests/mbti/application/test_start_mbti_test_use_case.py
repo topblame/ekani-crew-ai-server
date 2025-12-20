@@ -1,7 +1,7 @@
 import uuid
 
-from app.mbti.application.port.input.start_mbti_test_use_case import StartMBTITestCommand
-from app.mbti.application.use_case.start_mbti_test_service import StartMBTITestService
+from app.mbti_test.application.port.input.start_mbti_test_use_case import StartMBTITestCommand
+from app.mbti_test.application.use_case.start_mbti_test_service import StartMBTITestService
 from tests.mbti.fixtures.fake_mbti_test_session_repository import FakeMBTITestSessionRepository
 from tests.mbti.fixtures.fake_question_provider import FakeQuestionProvider
 

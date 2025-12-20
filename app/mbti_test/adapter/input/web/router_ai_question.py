@@ -5,11 +5,11 @@ from typing import Annotated, List, Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.mbti.adapter.output.openai_ai_question_provider import (
+from app.mbti_test.adapter.output.openai_ai_question_provider import (
     create_openai_question_provider_from_settings,
 )
-from app.mbti.application.use_case.generate_ai_question_usecase import GenerateAIQuestionUseCase
-from app.mbti.domain.models import ChatMessage, GenerateAIQuestionCommand, MessageRole
+from app.mbti_test.application.use_case.generate_ai_question_usecase import GenerateAIQuestionUseCase
+from app.mbti_test.domain.models import ChatMessage, GenerateAIQuestionCommand, MessageRole
 
 
 router = APIRouter(tags=["MBTI Test"])

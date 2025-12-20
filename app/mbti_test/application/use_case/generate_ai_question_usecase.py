@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.mbti.application.port.ai_question_provider_port import AIQuestionProviderPort
-from app.mbti.domain.models import AIQuestionResponse, GenerateAIQuestionCommand
+from app.mbti_test.application.port.ai_question_provider_port import AIQuestionProviderPort
+from app.mbti_test.domain.models import AIQuestionResponse, GenerateAIQuestionCommand
 
 
 @dataclass

@@ -45,12 +45,12 @@ def test_update_profile_success_with_authorization_header(client, user_repo, ses
     response = client.put(
         "/user/profile",
         headers={"Authorization": "Bearer valid-session"},
-        json={"mbti": "intj", "gender": "male"},
+        json={"mbti_test": "intj", "gender": "male"},
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["mbti"] == "INTJ"
+    assert data["mbti_test"] == "INTJ"
     assert data["gender"] == "MALE"
 
 
@@ -62,19 +62,19 @@ def test_update_profile_success_with_cookie(client, user_repo, session_repo):
     response = client.put(
         "/user/profile",
         cookies={"session_id": "valid-session"},
-        json={"mbti": "intj", "gender": "female"},
+        json={"mbti_test": "intj", "gender": "female"},
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["mbti"] == "INTJ"
+    assert data["mbti_test"] == "INTJ"
     assert data["gender"] == "FEMALE"
 
 
 def test_update_profile_requires_auth(client):
     response = client.put(
         "/user/profile",
-        json={"mbti": "INTJ", "gender": "MALE"},
+        json={"mbti_test": "INTJ", "gender": "MALE"},
     )
     assert response.status_code == 401
 
@@ -85,7 +85,7 @@ def test_update_profile_user_not_found_returns_404(client, session_repo):
     response = client.put(
         "/user/profile",
         headers={"Authorization": "Bearer valid-session"},
-        json={"mbti": "INTJ", "gender": "MALE"},
+        json={"mbti_test": "INTJ", "gender": "MALE"},
     )
 
     assert response.status_code == 404
@@ -99,7 +99,7 @@ def test_update_profile_invalid_mbti_returns_400(client, user_repo, session_repo
     response = client.put(
         "/user/profile",
         headers={"Authorization": "Bearer valid-session"},
-        json={"mbti": "XXXX", "gender": "MALE"},
+        json={"mbti_test": "XXXX", "gender": "MALE"},
     )
 
     assert response.status_code == 400
@@ -119,7 +119,7 @@ def test_get_profile_success(client, user_repo, session_repo):
     data = response.json()
     assert data["id"] == "user-123"
     assert data["email"] == "test@example.com"
-    assert data["mbti"] is None
+    assert data["mbti_test"] is None
     assert data["gender"] is None
 
 

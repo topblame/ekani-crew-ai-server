@@ -21,7 +21,7 @@ def test_start_mbti_test_endpoint(client: TestClient):
     request_data = {"user_id": str(user_id)}
 
     # When
-    response = client.post("/mbti-test/start", json=request_data)
+    response = client.post("/mbti_test-test/start", json=request_data)
 
     # Then
     assert response.status_code == 200

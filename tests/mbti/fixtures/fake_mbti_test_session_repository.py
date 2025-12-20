@@ -1,8 +1,8 @@
 import uuid
 from typing import Dict
 
-from app.mbti.application.port.output.mbti_test_session_repository import MBTITestSessionRepositoryPort
-from app.mbti.domain.mbti_test_session import MBTITestSession
+from app.mbti_test.application.port.output.mbti_test_session_repository import MBTITestSessionRepositoryPort
+from app.mbti_test.domain.mbti_test_session import MBTITestSession
 
 
 class FakeMBTITestSessionRepository(MBTITestSessionRepositoryPort):

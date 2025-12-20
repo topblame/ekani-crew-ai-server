@@ -37,7 +37,7 @@ def get_profile(
     return {
         "id": user.id,
         "email": user.email,
-        "mbti": user.mbti.value if user.mbti else None,
+        "mbti_test": user.mbti.value if user.mbti else None,
         "gender": user.gender.value if user.gender else None,
     }
 
@@ -76,6 +76,6 @@ def update_profile(
     return {
         "id": updated_user.id,
         "email": updated_user.email,
-        "mbti": updated_user.mbti.value,
+        "mbti_test": updated_user.mbti.value,
         "gender": updated_user.gender.value,
     }

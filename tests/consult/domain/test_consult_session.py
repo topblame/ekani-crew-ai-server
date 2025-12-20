@@ -57,7 +57,7 @@ def test_consult_session_rejects_empty_user_id():
 
 def test_consult_session_rejects_none_mbti():
     """None인 mbti를 거부한다"""
-    # Given: None인 mbti
+    # Given: None인 mbti_test
     session_id = "session-123"
     user_id = "user-456"
     mbti = None

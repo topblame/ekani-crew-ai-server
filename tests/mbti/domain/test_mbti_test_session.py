@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from app.mbti.domain.mbti_test_session import MBTITestSession
+from app.mbti_test.domain.mbti_test_session import MBTITestSession
 
 
 def test_create_mbti_test_session():

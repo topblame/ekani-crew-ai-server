@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import uuid
 
-from app.mbti.domain.mbti_test_session import MBTITestSession
+from app.mbti_test.domain.mbti_test_session import MBTITestSession
 
 
 class MBTITestSessionRepositoryPort(ABC):

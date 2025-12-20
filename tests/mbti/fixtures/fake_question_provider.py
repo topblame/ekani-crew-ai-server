@@ -1,5 +1,5 @@
-from app.mbti.application.port.output.question_provider_port import QuestionProviderPort
-from app.mbti.domain.mbti_message import MBTIMessage
+from app.mbti_test.application.port.output.question_provider_port import QuestionProviderPort
+from app.mbti_test.domain.mbti_message import MBTIMessage
 
 
 class FakeQuestionProvider(QuestionProviderPort):
