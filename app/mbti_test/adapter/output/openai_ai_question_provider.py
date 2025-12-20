@@ -134,15 +134,11 @@ class OpenAIQuestionProvider(AIQuestionProviderPort):
 
 # (선택) settings.py 기반 클라이언트 팩토리: 기존 프로젝트 스타일에 맞게 라우터에서 사용
 def create_openai_question_provider_from_settings() -> OpenAIQuestionProvider:
-    from config import settings # 프로젝트에 이미 존재한다고 가정
+    from config.settings import get_settings
     from openai import OpenAI
 
-    api_key = getattr(settings, "OPENAI_API_KEY", None)
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is missing in settings")
-
-    # 요구사항: gpt-4o-mini
+    settings = get_settings()  # ✅ 인스턴스 가져오기
+    api_key = settings.OPENAI_API_KEY
     model = getattr(settings, "OPENAI_MODEL", None) or "gpt-4o-mini"
     client = OpenAI(api_key=api_key)
-
     return OpenAIQuestionProvider(openai_client=client, model=model)

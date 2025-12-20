@@ -41,7 +41,7 @@ def _usecase_dep() -> GenerateAIQuestionUseCase:
     return GenerateAIQuestionUseCase(provider=provider)
 
 
-@router.post("/mbti-test/{session_id}/ai-question", response_model=GenerateAIQuestionResponse)
+@router.post("/{session_id}/ai-question", response_model=GenerateAIQuestionResponse)
 def generate_ai_question(
     session_id: str,
     req: GenerateAIQuestionRequest,
