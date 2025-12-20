@@ -120,16 +120,16 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 #### 🌟 MBTI Test Domain (핵심 - Team MBTI)
 
-##### 공통 기반 (Person A, B 협업)
+##### 공통 기반 (하민, 대호 협업)
 
 - [ ] `MBTI-1` [MBTI] 사용자로서, 채팅 형식으로 MBTI 테스트를 하고 싶다
   - **Domain**: `MBTITestSession` (id, user_id, status, created_at)
   - **Domain**: `MBTIMessage` (role, content, question_type, source)
   - **Port**: `QuestionProviderPort` 인터페이스 (사람/AI 질문 제공)
   - **API**: `POST /mbti-test/start` → 세션 시작, 첫 질문 반환
-  - **✅ 인수 조건**: 세션 생성, 질문 타입(일반/돌발) 구분
+  - **✅ 인수 조건**: 세션 생성, 질문 타입(일반/돌발) 구분3
 
-##### Person A: 사람이 만든 질문
+##### Person A(하민): 사람이 만든 질문
 
 - [ ] `MBTI-2` [MBTI] 사용자로서, 정형화된 질문에 답하고 싶다
   - **Domain**: `HumanQuestion` (id, text, dimension, type='normal')
@@ -140,7 +140,7 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **Domain**: `HumanQuestion` (id, text, dimension, type='surprise')
   - **✅ 인수 조건**: 간헐적 삽입, 정확도 향상용 질문셋
 
-##### Person B: AI 프롬프트 질문
+##### Person B(대호): AI 프롬프트 질문
 
 - [ ] `MBTI-4` [MBTI] 사용자로서, AI가 맥락에 맞는 질문을 해주길 원한다
   - **Adapter**: `AIQuestionProvider` (gpt-4o-mini)
@@ -151,7 +151,7 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **Prompt**: 돌발 질문 생성 프롬프트
   - **✅ 인수 조건**: 예상 못한 각도의 질문, 정확도 향상
 
-##### 공통 결과 처리 (Person A, B 협업)
+##### 공통 결과 처리 (하민, 대호 협업)
 
 - [ ] `MBTI-6` [MBTI] 사용자로서, 질문에 답하면 다음 질문이 나온다
   - **UseCase**: `AnswerMBTIQuestionUseCase`
