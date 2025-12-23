@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException
+
+from app.match.adapter.input.web.request.match_cancel_request import MatchCancelRequest
 from app.shared.vo.mbti import MBTI
 from app.match.adapter.input.web.request.match_request import MatchRequest
 from app.match.application.factory.match_usecase_factory import MatchUseCaseFactory
@@ -17,7 +19,11 @@ async def request_match(request: MatchRequest):
 
         # 2. UseCase 생성 및 실행
         usecase = MatchUseCaseFactory.create()
-        result = await usecase.request_match(request.user_id, mbti_enum)
+        result = await usecase.request_match(
+            user_id=request.user_id,
+            mbti=mbti_enum,
+            level=request.level
+        )
 
         return result
 
@@ -26,7 +32,7 @@ async def request_match(request: MatchRequest):
 
 
 @match_router.post("/cancel")
-async def cancel_match(request: MatchRequest):
+async def cancel_match(request: MatchCancelRequest):
     """
     매칭 대기열에서 유저를 삭제(취소)합니다.
     """

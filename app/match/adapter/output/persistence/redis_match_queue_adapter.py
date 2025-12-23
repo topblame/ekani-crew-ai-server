@@ -101,3 +101,27 @@ class RedisMatchQueueAdapter(MatchQueuePort):
         # 실제 대기 인원은 List 길이가 아니라 Set의 크기입니다. (취소된 유령 티켓 제외)
         set_key = self._get_set_key(mbti)
         return await self.redis.scard(set_key)
+
+    async def get_sorted_targets_by_size(self, mbti_list: list[str]) -> list[tuple[str, int]]:
+        """
+        Pipeline을 이용해 여러 MBTI 대기열 크기를 한 번에 조회하고,
+        대기자가 많은 순서(내림차순)로 정렬하여 반환합니다.
+        """
+        if not mbti_list:
+            return []
+
+        async with self.redis.pipeline() as pipe:
+            for mbti_str in mbti_list:
+                # Set의 크기(실제 유효 대기자 수) 조회
+                set_key = self._get_set_key(MBTI(mbti_str))
+                pipe.scard(set_key)
+
+            sizes = await pipe.execute()
+
+        # (MBTI, Size) 튜플 리스트 생성
+        result = list(zip(mbti_list, sizes))
+
+        # 사이즈 기준 내림차순 정렬 (많은 곳부터 탐색)
+        result.sort(key=lambda x: x[1], reverse=True)
+
+        return result

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List, Tuple
 from app.shared.vo.mbti import MBTI
 from app.match.domain.match_ticket import MatchTicket
 
@@ -22,4 +22,8 @@ class MatchQueuePort(ABC):
 
     @abstractmethod
     async def get_queue_size(self, mbti: MBTI) -> int:
+        pass
+
+    @abstractmethod
+    async def get_sorted_targets_by_size(self, mbti_list: List[str]) -> List[Tuple[str, int]]:
         pass

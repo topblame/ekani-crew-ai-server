@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
 class MatchRequest(BaseModel):
-    user_id: str = Field(..., description="매칭을 요청하는 유저의 ID")
-    mbti: str = Field(..., description="유저의 MBTI (예: INFP)")
+    user_id: str
+    mbti: str
+    level: int = Field(default=1, ge=1, le=4, description="1:천생연분, 2:좋음, 3:무난, 4:전체")
