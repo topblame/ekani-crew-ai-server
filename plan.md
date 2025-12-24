@@ -9,7 +9,7 @@ app/
 ├── shared/                     # 공통 VO (MBTI, Gender) - 타입 정의만, 도메인 의존성 아님
 ├── user/                       # 사용자 도메인 (MBTI 저장소)
 ├── auth/                       # 인증 도메인 (OAuth)
-├── mbti_test/                  # AI MBTI 테스트 도메인 (NEW - 핵심!)
+├── mbti_test/                  # AI MBTI 검사 도메인 (NEW - 핵심!)
 ├── matching/                   # 매칭 도메인 (NEW)
 ├── chat/                       # 실시간 채팅 도메인 (NEW)
 ├── referral/                   # 레퍼럴 도메인 (NEW)
@@ -58,19 +58,36 @@ app/
 | **조장** | 1명 | 전체 서포트 | |
 | ↳ Person E | 1명 | payment/, referral/ | 남는 시간에 병목 해결 |
 
-### MBTI 테스트 구조
+### MBTI 검사 구조
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    MBTI 테스트 (2개 테스트)                   │
-├────────────────────────────┬────────────────────────────────┤
-│   테스트 A (하민)           │   테스트 B (대호)               │
-│   저장된 질문 기반           │   AI 질문 기반                 │
-├────────────────────────────┼────────────────────────────────┤
-│ • DB에 저장된 정형 질문      │ • AI가 맥락 기반 질문 생성      │
-│ • E/I, S/N, T/F, J/P 커버   │ • 대화 흐름에 따라 동적 질문    │
-├────────────────────────────┴────────────────────────────────┤
-│          두 테스트 각각 진행 → 결과 합산 → 정밀 MBTI 도출      │
+│              MBTI 검사 (순차 적응형 - 총 24개)               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [1단계] 사람이 만든 질문 12개 (하민)                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ • 룰베이스 가중치로 MBTI 비중 계산                     │   │
+│  │ • E/I, S/N, T/F, J/P 각 차원별 질문                  │   │
+│  │ • 한국 정서에 맞는 신박한 질문                         │   │
+│  │   예: "우울해서 빵샀어 그러면 뭐라 대답할래?"           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                          ↓                                  │
+│                   MBTI 비중 전달                             │
+│            (예: E 60% / I 40%, S 30% / N 70%...)            │
+│                          ↓                                  │
+│  [2단계] AI가 만든 질문 12개 (대호)                           │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ • 1단계 MBTI 비중을 기반으로 정확도 높이는 질문 생성    │   │
+│  │ • 애매한 차원(50:50에 가까운)을 집중 검증               │   │
+│  │ • 대화형 맥락 기반 동적 질문                           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                          ↓                                  │
+│                  최종 MBTI 도출                              │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  💡 차별화: 기존 MBTI 검사는 번역체라 한국 정서에 안맞음       │
+│     → 한국식 신박한 질문 + AI 적응형으로 정확도 ↑            │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -92,9 +109,8 @@ Person C ───→ MATCH-1 → MATCH-2 → MATCH-3
 Person D ───→ CHAT-1 → CHAT-2 → CHAT-3 → CHAT-4
 조장 ───────→ PAY-1 + 병목 지원
 
-[Week 3] 매칭 고도화
-Person A ───→ MATCH-4 (궁합 매칭)
-Person B ───→ MATCH-5 (유사 매칭)
+[Week 3] 테스트 및 안정화
+Person A,B ─→ (여유 - 다른 도메인 지원 가능)
 Person C,D ─→ TEST-1, TEST-2 (통합/부하 테스트)
 조장 ───────→ PAY-2 (결제 API)
 
@@ -123,52 +139,93 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 ### Week 1-2: MVP 출시
 
-> **목표**: AI MBTI 테스트로 관심 유도 + 매칭/채팅으로 가치 검증
+> **목표**: AI MBTI 검사로 관심 유도 + 매칭/채팅으로 가치 검증
 
 #### 🌟 MBTI Test Domain (핵심 - Team MBTI)
 
-> **구조**: 두 가지 테스트를 각각 진행 → 결과 합산 → 정밀도 향상
+> **구조**: 사람 질문 12개 → MBTI 비중 계산 → AI 질문 12개 (순차 적응형)
+> **총 24개 질문**: 피로도 최소화 + 정확도 최대화
+> **차별화**: 한국 정서에 맞는 신박한 질문 (번역체 X)
 > **돌발 질문**: 앱 사용 중 간헐적으로 등장하여 MBTI 보정
 
 ##### 공통 기반 (하민, 대호 협업)
 
-- [ ] `MBTI-1` [MBTI] 사용자로서, 채팅 형식으로 MBTI 테스트를 하고 싶다
-  - **Domain**: `MBTITestSession` (id, user_id, test_type='human'|'ai', status, created_at)
+- [x] `MBTI-1` [MBTI] 사용자로서, 채팅 형식으로 MBTI 검사를 하고 싶다
+  - **Domain**: `MBTITestSession` (id, user_id, phase='human'|'ai', status, question_index, created_at)
   - **Domain**: `MBTIMessage` (role, content, source='human'|'ai')
-  - **API**: `POST /mbti-test/start?type=human|ai` → 세션 시작, 첫 질문 반환
-  - **✅ 인수 조건**: 테스트 타입별 세션 생성, 각각 독립적으로 진행
+  - **Domain**: `MBTIDimensionScore` (e_score, i_score, s_score, n_score, t_score, f_score, j_score, p_score)
+  - **API**: `POST /mbti-test/start` → 세션 시작, 사람 질문 1번 반환
+  - **✅ 인수 조건**: 세션 생성, 1단계(사람 질문)부터 시작
+
+- [x] `MBTI-1-1` [MBTI] 시스템으로서, 세션/응답을 DB에 저장하고 싶다
+  - **Domain**: `MBTIAnswer` (id, session_id, question_id, question_text, answer_text, dimension, weight_applied, created_at)
+  - **Repository**: `MBTITestSessionRepository` - 세션 CRUD
+  - **Repository**: `MBTIAnswerRepository` - 응답 CRUD
+  - **Infrastructure**: `MBTITestSessionModel`, `MBTIAnswerModel` (MySQL ORM)
+  - **✅ 인수 조건**:
+    - 매 응답마다 DB에 저장
+    - 세션에 현재 질문 인덱스(question_index) 저장
+    - 중간 MBTI 비중(dimension_scores) 저장
+
+- [ ] `MBTI-1-2` [MBTI] 사용자로서, 중간에 끊긴 검사를 이어서 하고 싶다
+  - **UseCase**: `ResumeMBTITestUseCase` - 미완료 세션 조회 및 재개
+  - **API**: `GET /mbti-test/resume` → 진행 중인 세션 조회 + 다음 질문 반환
+  - **API**: `POST /mbti-test/start` → 이미 진행 중인 세션 있으면 해당 세션 반환
+  - **✅ 인수 조건**:
+    - 미완료 세션 있으면 이어서 진행
+    - 마지막 응답 이후 질문부터 재개
+    - 이전 응답/비중 그대로 유지
 
 ---
 
-##### 📋 테스트 A: 저장된 질문 기반 (하민)
+##### 📋 1단계: 사람이 만든 질문 12개 (하민)
 
-- [ ] `MBTI-2` [MBTI] 사용자로서, 저장된 질문에 답하며 MBTI 테스트를 하고 싶다
-  - **Domain**: `HumanQuestion` (id, text, dimension, options)
-  - **Adapter**: `HumanQuestionProvider` - 질문 DB에서 조회
+- [x] `MBTI-2` [MBTI] 사용자로서, 사람이 만든 질문 12개에 답하고 싶다
+  - **Domain**: `HumanQuestion` (id, text, dimension, options, weights)
+  - **Domain**: `AnswerKeyword` (id, question_id, keyword, dimension, score)
+    - 예: 질문 "우울해서 빵샀어 그러면 뭐라 대답할래?"
+    - 키워드: "괜찮아" → F +1, "왜 빵" → T +1, "같이 먹자" → E +1, "혼자 먹어" → I +1
+  - **Adapter**: `HumanQuestionProvider` - 질문 + 키워드 DB에서 조회
   - **UseCase**: `AnswerHumanQuestionUseCase`
-  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문
-  - **✅ 인수 조건**: E/I, S/N, T/F, J/P 차원별 질문셋, 응답 저장
+    - 사용자 답변에서 키워드 매칭
+    - 매칭된 키워드의 dimension별 score 합산
+    - MBTI 비중 계산
+  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문 (12개까지)
+  - **✅ 인수 조건**:
+    - E/I, S/N, T/F, J/P 각 3개씩 총 12개 질문
+    - 한국 정서에 맞는 신박한 질문 (예: "우울해서 빵샀어 그러면 뭐라 대답할래?")
+    - 질문별 예상 답변 키워드 미리 저장 (키워드 → dimension → score)
+    - 사용자 답변에서 키워드 매칭 → 해당 차원 점수 부여
+    - 12개 완료 시 → 2단계로 자동 전환
 
 ---
 
-##### 🤖 테스트 B: AI 질문 기반 (대호)
+##### 🤖 2단계: AI가 만든 질문 12개 (대호)
 
-- [ ] `MBTI-3` [MBTI] 사용자로서, AI와 대화하며 MBTI 테스트를 하고 싶다
+- [x] `MBTI-3` [MBTI] 사용자로서, AI가 만든 적응형 질문 12개에 답하고 싶다
+  - **Input**: 1단계에서 계산된 MBTI 비중 (예: E 60%/I 40%, S 30%/N 70%...)
   - **Adapter**: `AIQuestionProvider` (gpt-4o-mini)
-  - **Prompt**: 대화 히스토리 기반 다음 질문 생성
+  - **Prompt**: MBTI 비중을 받아 애매한 차원(50:50에 가까운)을 집중 검증하는 질문 생성
   - **UseCase**: `AnswerAIQuestionUseCase`
-  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문
-  - **✅ 인수 조건**: 맥락 기반 후속 질문, MBTI 차원 커버, 응답 저장
+  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문 (12개까지)
+  - **✅ 인수 조건**:
+    - 1단계 MBTI 비중을 기반으로 정확도 높이는 질문 생성
+    - 애매한 차원을 집중 검증 (예: E 55%/I 45%면 E/I 관련 질문 추가)
+    - 대화형 맥락 기반 동적 질문
+    - 12개 완료 시 → 결과 도출
 
 ---
 
-##### 🎯 결과 합산 (하민, 대호 협업)
+##### 🎯 결과 도출 (하민, 대호 협업)
 
-- [ ] `MBTI-4` [MBTI] 사용자로서, 두 테스트 결과를 합산한 정밀한 MBTI를 받고 싶다
-  - **Domain**: `MBTIResult` (mbti, confidence, human_score, ai_score, analysis)
-  - **UseCase**: `CalculateCombinedMBTIUseCase` - 두 테스트 결과 합산
-  - **API**: `GET /mbti-test/result` → 합산된 MBTI 결과
-  - **✅ 인수 조건**: 두 테스트 완료 후 합산, User.mbti 자동 업데이트
+- [ ] `MBTI-4` [MBTI] 사용자로서, 24개 질문 결과로 정밀한 MBTI를 받고 싶다
+  - **Domain**: `MBTIResult` (mbti, confidence, dimension_scores, analysis)
+  - **UseCase**: `CalculateFinalMBTIUseCase` - 1단계 + 2단계 결과 종합
+  - **API**: `GET /mbti-test/result` → 최종 MBTI 결과
+  - **✅ 인수 조건**:
+    - 24개 질문 완료 후 최종 MBTI 도출
+    - 각 차원별 비중 표시 (예: E 72% / I 28%)
+    - User.mbti 자동 업데이트
 
 ---
 
@@ -193,16 +250,23 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 #### Matching Domain (Team Match)
 
-- [ ] `MATCH-1` [Matching] 사용자로서, 매칭 대기열에 등록하고 싶다
+- [x] `MATCH-1` [Matching] 사용자로서, 매칭 대기열에 등록하고 싶다
   - **Domain**: `MatchingQueue` (user_id, status, created_at)
   - **API**: `POST /matching/queue` → 대기열 등록
   - **✅ 인수 조건**: 대기열 등록, 중복 등록 방지
 
-- [ ] `MATCH-2` [Matching] 사용자로서, 대기 중인 다른 사용자와 랜덤 매칭되고 싶다
+- [ ] `MATCH-2` [Matching] 사용자로서, MBTI 궁합 기반으로 매칭되고 싶다
   - **Domain**: `Match` (id, user1_id, user2_id, status, created_at)
-  - **UseCase**: `RandomMatchUseCase` - 대기열에서 2명 매칭
-  - **API**: `POST /matching/random` → 매칭 결과 반환
-  - **✅ 인수 조건**: 2명 매칭, 매칭 시 상대 MBTI 표시, 채팅방 생성
+  - **Domain**: `MBTICompatibility` (mbti1, mbti2, score) - DB에 미리 저장된 궁합 테이블
+  - **UseCase**: `SmartMatchUseCase` - 시간 기반 스마트 매칭
+    - 대기 시작 직후: 궁합 점수 높은 사람 우선 매칭
+    - 시간이 지남: 점점 궁합 조건 완화
+    - 일정 시간 초과: 아무 MBTI나 매칭
+  - **API**: `POST /matching/queue` → 대기열 등록 후 자동 매칭
+  - **✅ 인수 조건**:
+    - 처음엔 궁합 좋은 사람 우선 매칭
+    - 대기 시간이 길어지면 조건 완화하여 아무나 매칭
+    - 매칭 시 상대 MBTI 표시, 채팅방 생성
 
 - [ ] `MATCH-3` [Matching] 무료 사용자로서, 하루 3회까지 매칭할 수 있다
   - **Domain 확장**: `User.daily_match_count`, `User.last_match_date`
@@ -212,7 +276,7 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 #### Chat Domain (Team Match)
 
-- [ ] `CHAT-1` [Chat] 매칭 성공 시, 자동으로 채팅방이 생성되고 메시지를 DB에 저장할 수 있다
+- [x] `CHAT-1` [Chat] 매칭 성공 시, 자동으로 채팅방이 생성되고 메시지를 DB에 저장할 수 있다
   - **Domain**: `ChatRoom` (id, match_id, created_at)
   - **Domain**: `ChatMessage` (id, room_id, sender_id, content, created_at)
   - **Repository**: `ChatRoomRepository` - 채팅방 저장/조회
@@ -223,9 +287,9 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **UseCase**: `SaveChatMessageUseCase` - 메시지 저장
   - **✅ 인수 조건**: 매칭 시 채팅방 자동 생성, 메시지 DB 영속화
 
-- [ ] `CHAT-2` [Chat] 사용자로서, 실시간으로 메시지를 주고받고 싶다
+- [x] `CHAT-2` [Chat] 사용자로서, 실시간으로 메시지를 주고받고 싶다
   - **Adapter**: WebSocket 핸들러 (FastAPI WebSocket)
-  - **UseCase**: `SendMessageUseCase` - 메시지 전송 및 DB 저장
+  - **UseCase**: `SaveChatMessageUseCase` - 메시지 전송 및 DB 저장
   - **API**: `WS /chat/{room_id}`
   - **✅ 인수 조건**: WebSocket 연결, 실시간 메시지 송수신, 메시지 DB 영속화
 
@@ -238,25 +302,6 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **UseCase**: `GetMyChatRoomsUseCase` - 내 채팅방 목록 조회
   - **API**: `GET /chat/rooms` → 내 채팅방 목록
   - **✅ 인수 조건**: DB에서 채팅방 목록 조회, 최근 메시지 미리보기, 안 읽은 메시지 카운트
-
----
-
-### Week 3: 매칭 고도화
-
-> **목표**: MBTI 기반 매칭 알고리즘으로 매칭 품질 개선
-
-#### MBTI 기반 매칭 알고리즘 (Team MBTI)
-
-- [ ] `MATCH-4` [Matching] 사용자로서, MBTI 궁합이 좋은 사람과 매칭되고 싶다
-  - **Domain**: `MBTICompatibility` - 궁합 점수 계산
-  - **UseCase**: `CompatibilityMatchUseCase` - 궁합 기반 매칭
-  - **API**: `POST /matching/compatibility` → MBTI 궁합 매칭
-  - **✅ 인수 조건**: 궁합 점수 높은 순 매칭
-
-- [ ] `MATCH-5` [Matching] 사용자로서, 나와 비슷한 MBTI 사람과 매칭되고 싶다
-  - **UseCase**: `SimilarMBTIMatchUseCase`
-  - **API**: `POST /matching/similar` → 유사 MBTI 매칭
-  - **✅ 인수 조건**: 같은/유사 MBTI 우선 매칭
 
 ---
 
