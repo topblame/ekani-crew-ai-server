@@ -41,9 +41,9 @@ def _usecase_dep() -> GenerateAIQuestionUseCase:
     return GenerateAIQuestionUseCase(provider=provider)
 
 
-@router.post("/{session_id}/ai-question", response_model=GenerateAIQuestionResponse)
+@router.post("/{test_session_id}/ai-question", response_model=GenerateAIQuestionResponse)
 def generate_ai_question(
-    session_id: str,
+    test_session_id: str,
     req: GenerateAIQuestionRequest,
     usecase: GenerateAIQuestionUseCase = Depends(_usecase_dep),
 ) -> GenerateAIQuestionResponse:
@@ -54,7 +54,7 @@ def generate_ai_question(
         for m in req.history
     ]
     cmd = GenerateAIQuestionCommand(
-        session_id=session_id,
+        session_id=test_session_id,
         turn=req.turn,
         history=history,
         question_mode=req.question_mode,

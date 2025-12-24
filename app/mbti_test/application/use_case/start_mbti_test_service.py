@@ -21,17 +21,18 @@ class StartMBTITestService(StartMBTITestUseCase):
         self._question_provider = question_provider
 
     def execute(self, command: StartMBTITestCommand) -> StartMBTITestResponse:
+        first_question = self._question_provider.get_initial_question()
+
         session = MBTITestSession(
             id=uuid.uuid4(),
             user_id=command.user_id,
             test_type=command.test_type,
             status=TestStatus.IN_PROGRESS,
             created_at=datetime.now(),
+            questions=[first_question.content],  # Save first question
         )
 
         self._mbti_test_session_repository.save(session)
-
-        first_question = self._question_provider.get_initial_question()
 
         return StartMBTITestResponse(
             session=session,

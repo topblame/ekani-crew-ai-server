@@ -133,31 +133,29 @@ Person C,D ─→ 버그 픽스, UX 개선
 ##### 공통 기반 (하민, 대호 협업)
 
 - [x] `MBTI-1` [MBTI] 사용자로서, 채팅 형식으로 MBTI 테스트를 하고 싶다
-  - **Domain**: `MBTITestSession` (id, user_id, test_type='human'|'ai', status, created_at)
+  - **Domain**: `MBTITestSession` (id, user_id, test_type, status, created_at, questions, answers)
   - **Domain**: `MBTIMessage` (role, content, source='human'|'ai')
-  - **API**: `POST /mbti-test/start?type=human|ai` → 세션 시작, 첫 질문 반환
-  - **✅ 인수 조건**: 테스트 타입별 세션 생성, 각각 독립적으로 진행
+  - **API**: `POST /mbti-test/start` → 세션 시작, 첫 질문 반환
+  - **API**: `POST /mbti-test/{test_session_id}/answer` → 통합 답변 엔드포인트
+  - **✅ 인수 조건**: 단일 세션에서 24개 질문 진행 (1-12: Human, 13-24: AI)
 
 ---
 
-##### 📋 테스트 A: 저장된 질문 기반 (하민)
+##### 📋 질문 1-12: 저장된 질문 기반 (하민)
 
 - [x] `MBTI-2` [MBTI] 사용자로서, 저장된 질문에 답하며 MBTI 테스트를 하고 싶다
-  - **Domain**: `HumanQuestion` (id, text, dimension, options)
-  - **Adapter**: `HumanQuestionProvider` - 질문 DB에서 조회
-  - **UseCase**: `AnswerHumanQuestionUseCase`
-  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문
+  - **Adapter**: `HumanQuestionProvider` - 12개 저장된 질문 (E/I, S/N, T/F, J/P 각 3개)
+  - **UseCase**: `AnswerQuestionService` - 통합 답변 처리
   - **✅ 인수 조건**: E/I, S/N, T/F, J/P 차원별 질문셋, 응답 저장
 
 ---
 
-##### 🤖 테스트 B: AI 질문 기반 (대호)
+##### 🤖 질문 13-24: AI 질문 기반 (대호)
 
-- [ ] `MBTI-3` [MBTI] 사용자로서, AI와 대화하며 MBTI 테스트를 하고 싶다
+- [x] `MBTI-3` [MBTI] 사용자로서, AI와 대화하며 MBTI 테스트를 하고 싶다
   - **Adapter**: `AIQuestionProvider` (gpt-4o-mini)
   - **Prompt**: 대화 히스토리 기반 다음 질문 생성
-  - **UseCase**: `AnswerAIQuestionUseCase`
-  - **API**: `POST /mbti-test/{session_id}/answer` → 다음 질문
+  - **UseCase**: `AnswerQuestionService` - 통합 답변 처리 (question_index >= 12일 때 AI 호출)
   - **✅ 인수 조건**: 맥락 기반 후속 질문, MBTI 차원 커버, 응답 저장
 
 ---
