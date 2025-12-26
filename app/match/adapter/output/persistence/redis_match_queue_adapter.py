@@ -125,3 +125,10 @@ class RedisMatchQueueAdapter(MatchQueuePort):
         result.sort(key=lambda x: x[1], reverse=True)
 
         return result
+
+    async def is_user_in_queue(self, user_id: str, mbti: MBTI) -> bool:
+        """
+        Set을 확인하여 유저가 대기열에 있는지 확인합니다. [O(1)]
+        """
+        set_key = self._get_set_key(mbti)
+        return await self.redis.sismember(set_key, user_id)

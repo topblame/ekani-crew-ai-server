@@ -18,6 +18,15 @@ class MatchUseCase:
         """
         유저의 매칭 요청을 처리합니다 (Enqueue).
         """
+        if await self.match_queue.is_user_in_queue(user_id, mbti):
+            wait_count = await self.get_waiting_count(mbti)
+            return {
+                "status": "already_waiting",
+                "message": "이미 대기열에 등록된 유저입니다.",
+                "my_mbti": mbti.value,
+                "wait_count": wait_count
+            }
+
         # 도메인 객체 생성
         my_ticket = MatchTicket(user_id=user_id, mbti=mbti)
 

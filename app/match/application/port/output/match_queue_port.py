@@ -27,3 +27,7 @@ class MatchQueuePort(ABC):
     @abstractmethod
     async def get_sorted_targets_by_size(self, mbti_list: List[str]) -> List[Tuple[str, int]]:
         pass
+
+    @abstractmethod
+    async def is_user_in_queue(self, user_id: str, mbti: MBTI) -> bool:
+        pass
