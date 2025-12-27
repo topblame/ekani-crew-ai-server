@@ -71,9 +71,9 @@ async def start_mbti_test(
     result = use_case.execute(command)
     return jsonable_encoder({"session": result.session, "first_question": result.first_question})
 
-@mbti_router.post("/{test_session_id}/chat")
-async def chat(
-    test_session_id: str,
+@mbti_router.post("/{session_id}/answer")
+async def answer_question(
+    session_id: str,
     request: ChatRequest,
     user_id: str = Depends(get_current_user_id),
     session_repository: MBTITestSessionRepositoryPort = Depends(get_session_repository),
@@ -86,7 +86,7 @@ async def chat(
         ai_question_provider=ai_question_provider,
     )
     try:
-        command = AnswerQuestionCommand(session_id=test_session_id, answer=request.content)
+        command = AnswerQuestionCommand(session_id=session_id, answer=request.content)
         result = use_case.execute(command)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -99,6 +99,37 @@ async def chat(
         "analysis_result": result.analysis_result,
         "partial_analysis_result": result.partial_analysis_result,
     })
+
+
+@mbti_router.post("/{session_id}/chat")
+async def answer_question_chat(
+    session_id: str,
+    request: ChatRequest,
+    user_id: str = Depends(get_current_user_id),
+    session_repository: MBTITestSessionRepositoryPort = Depends(get_session_repository),
+    human_question_provider: HumanQuestionProvider = Depends(get_human_question_provider),
+    ai_question_provider: AIQuestionProviderPort = Depends(get_ai_question_provider),
+):
+    use_case = AnswerQuestionService(
+        session_repository=session_repository,
+        human_question_provider=human_question_provider,
+        ai_question_provider=ai_question_provider,
+    )
+    try:
+        command = AnswerQuestionCommand(session_id=session_id, answer=request.content)
+        result = use_case.execute(command)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return jsonable_encoder({
+        "question_number": result.question_number,
+        "total_questions": result.total_questions,
+        "next_question": result.next_question,
+        "is_completed": result.is_completed,
+        "analysis_result": result.analysis_result,
+        "partial_analysis_result": result.partial_analysis_result,
+    })
+
 
 @mbti_router.get("/result/{session_id}", response_model=MBTIResultResponse)
 def get_result(
