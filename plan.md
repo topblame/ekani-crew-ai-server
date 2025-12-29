@@ -282,56 +282,59 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 #### Community Domain (커뮤니티 - SEO 핵심)
 
-> **컨셉**: MBTI 기반 찬반 투표 / MBTI 맞추기 / 유명인 MBTI 투표
+> **컨셉**: MBTI 연애/관계 토론 게시판
+> ```
+> ┌─────────────────────────────────────────┐
+> │  🔥 이주의 토픽: "INTJ 남자 원래 이런가요?"  │  ← 게시판 헤더
+> ├─────────────────────────────────────────┤
+> │  [토픽] INTJ 남친이 답장을 안 해요...      │
+> │  [토픽] 저도 INTJ인데 공감돼요            │
+> │  [자유] ENFP인데 썸남 MBTI 모르겠어요     │
+> │  [자유] 직장 상사가 ESTJ인데 어떡하죠     │
+> └─────────────────────────────────────────┘
+> ```
 > **SEO 전략**: 게시글마다 고유 URL → 검색 노출 → 자연 유입
 
-##### 기본 게시판 기능
+##### 이주의 토픽
 
-- [ ] `COMM-1` [Community] 사용자로서, MBTI 사연을 올리고 싶다
-  - **Domain**: `Post` (id, author_id, title, content, post_type, mbti_context, created_at)
-  - **Domain**: `PostType` = 'story' | 'guess' | 'celebrity'
+- [ ] `COMM-1` [Community] 운영자로서, 이주의 토픽을 등록하고 싶다
+  - **Domain**: `Topic` (id, title, description, start_date, end_date, is_active, created_at)
+  - **Repository**: `TopicRepository` - 토픽 저장/조회
+  - **API**: `POST /community/topics` → 토픽 등록 (관리자)
+  - **API**: `GET /community/topics/current` → 현재 활성 토픽 (게시판 헤더용)
+  - **✅ 인수 조건**: 토픽 제목/설명, 기간 설정, 게시판 상단 헤더에 표시
+
+##### 토론 게시판
+
+- [ ] `COMM-2` [Community] 사용자로서, 토론 게시글을 작성하고 싶다
+  - **Domain**: `Post` (id, author_id, topic_id?, title, content, post_type, created_at)
+  - **Domain**: `PostType` = 'topic' | 'free'
   - **Repository**: `PostRepository` - 게시글 저장/조회
   - **API**: `POST /community/posts` → 게시글 작성
-  - **API**: `GET /community/posts` → 게시글 목록 (페이지네이션)
   - **API**: `GET /community/posts/{post_id}` → 게시글 상세 (SEO용 고유 URL)
-  - **✅ 인수 조건**: 제목/내용 작성, 작성자 MBTI 표시, 게시글 타입 선택
+  - **✅ 인수 조건**: 토픽 글(topic_id 연결) or 자유 글 선택, 작성자 MBTI 표시
 
-- [ ] `COMM-2` [Community] 사용자로서, 게시글 목록을 보고 싶다
+- [ ] `COMM-3` [Community] 사용자로서, 게시글 목록을 보고 싶다
   - **UseCase**: `GetPostListUseCase` - 게시글 목록 조회
   - **API**: `GET /community/posts?type={type}&page={page}`
-  - **✅ 인수 조건**: 타입별 필터링, 최신순 정렬, 투표 수 표시
+  - **✅ 인수 조건**: 토픽/자유 필터링, 최신순 정렬, 댓글 수 표시
 
-##### 찬반 투표 (MBTI 사연)
+##### 밸런스 게임
 
-- [ ] `COMM-3` [Community] 사용자로서, MBTI 사연에 찬반 투표를 하고 싶다
-  - **Domain**: `Vote` (id, post_id, user_id, vote_type='agree'|'disagree', created_at)
-  - **UseCase**: `VoteOnPostUseCase` - 찬반 투표
-  - **API**: `POST /community/posts/{post_id}/vote` → 찬반 투표
-  - **✅ 인수 조건**: 찬성/반대 선택, 중복 투표 방지, 실시간 집계
-
-##### MBTI 맞추기
-
-- [ ] `COMM-4` [Community] 사용자로서, 사연 주인공의 MBTI를 맞추고 싶다
-  - **Domain**: `MBTIGuess` (id, post_id, user_id, guessed_mbti, created_at)
-  - **UseCase**: `GuessPostMBTIUseCase` - MBTI 예측 투표
-  - **API**: `POST /community/posts/{post_id}/guess` → MBTI 예측
-  - **API**: `GET /community/posts/{post_id}/guess/result` → 예측 통계
-  - **✅ 인수 조건**: 16가지 MBTI 중 선택, 투표 통계 시각화, 정답 공개 기능
-
-##### 유명인 MBTI 투표
-
-- [ ] `COMM-5` [Community] 사용자로서, 유명인의 MBTI를 투표하고 싶다
-  - **Domain**: `Celebrity` (id, name, image_url, description, created_at)
-  - **Domain**: `CelebrityMBTIVote` (id, celebrity_id, user_id, voted_mbti, created_at)
-  - **UseCase**: `VoteCelebrityMBTIUseCase` - 유명인 MBTI 투표
-  - **API**: `GET /community/celebrities` → 유명인 목록
-  - **API**: `POST /community/celebrities/{celebrity_id}/vote` → MBTI 투표
-  - **API**: `GET /community/celebrities/{celebrity_id}/result` → 투표 결과
-  - **✅ 인수 조건**: 유명인별 투표 페이지, MBTI별 투표 비율 차트
+- [ ] `COMM-4` [Community] 사용자로서, MBTI 밸런스 게임에 참여하고 싶다
+  - **Domain**: `BalanceGame` (id, question, option_left, option_right, week_of, is_active, created_at)
+  - **Domain**: `BalanceVote` (id, game_id, user_id, user_mbti, choice='left'|'right', created_at)
+  - **Adapter**: `AIBalanceGameGenerator` - AI가 매주 밸런스 게임 주제 생성
+  - **UseCase**: `VoteBalanceGameUseCase` - 밸런스 게임 투표
+  - **UseCase**: `GetBalanceResultUseCase` - MBTI별 투표 결과 집계
+  - **API**: `GET /community/balance/current` → 이번 주 밸런스 게임
+  - **API**: `POST /community/balance/{game_id}/vote` → 왼쪽/오른쪽 투표
+  - **API**: `GET /community/balance/{game_id}/result` → MBTI별 투표 비율
+  - **✅ 인수 조건**: 왼쪽/오른쪽 선택, MBTI별 투표 비율 차트, 매주 AI가 새 주제 생성
 
 ##### 댓글 기능
 
-- [ ] `COMM-6` [Community] 사용자로서, 게시글에 댓글을 달고 싶다
+- [ ] `COMM-5` [Community] 사용자로서, 게시글에 댓글을 달고 싶다
   - **Domain**: `Comment` (id, post_id, author_id, content, created_at)
   - **UseCase**: `AddCommentUseCase` - 댓글 작성
   - **API**: `POST /community/posts/{post_id}/comments` → 댓글 작성
