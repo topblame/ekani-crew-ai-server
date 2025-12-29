@@ -17,5 +17,4 @@ class UserModel(Base):
     updated_at = Column(DateTime, nullable=True)
 
     # Relationships
-    consult_sessions = relationship("ConsultSessionModel", back_populates="user")
     oauth_identities = relationship("OAuthIdentityModel", back_populates="user")

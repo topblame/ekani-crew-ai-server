@@ -12,9 +12,7 @@ app/
 ├── mbti_test/                  # AI MBTI 테스트 도메인 (NEW - 핵심!)
 ├── matching/                   # 매칭 도메인 (NEW)
 ├── chat/                       # 실시간 채팅 도메인 (NEW)
-├── referral/                   # 레퍼럴 도메인 (NEW)
-├── payment/                    # 결제 도메인 (NEW)
-├── consult/                    # 상담 도메인 (기존)
+├── community/                  # 커뮤니티 도메인 (NEW - SEO!)
 └── converter/                  # 변환기 도메인 (기존)
 ```
 
@@ -26,20 +24,19 @@ app/
 │  (도출)     │      │  (중심)     │      │  (매칭)     │
 └─────────────┘      └─────────────┘      └─────────────┘
                            ↑
-          ┌────────────────┼────────────────┐
-          │                │                │
-    ┌─────┴─────┐    ┌─────┴─────┐    ┌─────┴─────┐
-    │   Chat    │    │ Referral  │    │  Payment  │
-    │  (대화)   │    │  (초대)   │    │  (결제)   │
-    └───────────┘    └───────────┘    └───────────┘
+              ┌────────────┴────────────┐
+              │                         │
+        ┌─────┴─────┐             ┌─────┴─────┐
+        │   Chat    │             │ Community │
+        │  (대화)   │             │  (SEO)    │
+        └───────────┘             └───────────┘
 ```
 
 - **MBTI Test** → User.mbti 업데이트 (핵심 차별점!)
 - **Matching** → User.mbti 조회 (궁합/유사 매칭)
 - **Chat** → User 조회 + Match 결과로 채팅방 생성
-- **Referral** → User 조회 (초대자/피초대자)
-- **Payment** → User 조회 (매칭권 추가)
-- **MBTI Test ↔ Matching ↔ Chat**: 직접 의존 없음 (User 통해 느슨한 결합)
+- **Community** → User 조회 (게시글/투표 작성자)
+- **MBTI Test ↔ Matching ↔ Chat ↔ Community**: 직접 의존 없음 (User 통해 느슨한 결합)
 
 ---
 
@@ -56,7 +53,7 @@ app/
 | ↳ Person C | 1명 | matching/ | 대기열, 매칭 로직 |
 | ↳ Person D | 1명 | chat/ | 채팅방, WebSocket |
 | **조장** | 1명 | 전체 서포트 | |
-| ↳ Person E | 1명 | payment/, referral/ | 남는 시간에 병목 해결 |
+| ↳ Person E | 1명 | community/ | 남는 시간에 병목 해결 |
 
 ### MBTI 테스트 구조
 
@@ -90,32 +87,30 @@ Person A ───→ 사람이 만든 질문 (일반 + 돌발)
 Person B ───→ AI 프롬프트 질문 (일반 + 돌발)
 Person C ───→ MATCH-1 → MATCH-2 → MATCH-3
 Person D ───→ CHAT-1 → CHAT-2 → CHAT-3 → CHAT-4
-조장 ───────→ PAY-1 + 병목 지원
+조장 ───────→ 병목 지원
 
 [Week 3] 매칭 고도화
 Person A ───→ MATCH-4 (궁합 매칭)
 Person B ───→ MATCH-5 (유사 매칭)
 Person C,D ─→ TEST-1, TEST-2 (통합/부하 테스트)
-조장 ───────→ PAY-2 (결제 API)
+조장 ───────→ COMM-1~2 (커뮤니티 기반)
 
-[Week 4] 그로스 해킹
-Person A,B ─→ REF-1~3 (레퍼럴)
+[Week 4] SEO + 커뮤니티
+Person A,B ─→ COMM-3~5 (투표/댓글)
 Person C,D ─→ 버그 픽스, UX 개선
-조장 ───────→ 결제 테스트 + 전체 조율
+조장 ───────→ SEO 최적화 + 전체 조율
 ```
 
 ---
 
 ## 완료된 기능 (v1.0)
 
-> Phase 0~2 완료 - 상담소 + 변환기 기능 구현 완료
+> Phase 0~1 완료 - 기본 인프라 + 변환기 기능 구현 완료
 
 | Phase | 내용 | 상태 |
 |-------|------|------|
 | Phase 0 | Shared Domain (MBTI, Gender VO), User, Auth (OAuth) | ✅ |
-| Phase 1 | Consult (세션, AI 인사, 메시지, SSE, 턴 관리, 분석) | ✅ |
 | Phase 1 | Converter (메시지 변환, 3가지 톤, MBTI 맞춤) | ✅ |
-| Phase 2 | 분석 결과 DB 저장, 히스토리 API, 마이페이지 | ✅ |
 
 ---
 
@@ -216,34 +211,19 @@ Person C,D ─→ 버그 픽스, UX 개선
 
 #### MBTI 기반 매칭 알고리즘 (Team MBTI)
 
-- [ ] `MATCH-4` [Matching] 사용자로서, MBTI 궁합이 좋은 사람과 매칭되고 싶다
+- [x] `MATCH-4` [Matching] 사용자로서, MBTI 궁합이 좋은 사람과 매칭되고 싶다
   - **Domain**: `MBTICompatibility` - 궁합 점수 계산
   - **UseCase**: `CompatibilityMatchUseCase` - 궁합 기반 매칭
   - **API**: `POST /matching/compatibility` → MBTI 궁합 매칭
   - **✅ 인수 조건**: 궁합 점수 높은 순 매칭
 
-- [ ] `MATCH-5` [Matching] 사용자로서, 나와 비슷한 MBTI 사람과 매칭되고 싶다
-  - **UseCase**: `SimilarMBTIMatchUseCase`
-  - **API**: `POST /matching/similar` → 유사 MBTI 매칭
-  - **✅ 인수 조건**: 같은/유사 MBTI 우선 매칭
-
 #### 인프라 (실시간 알림 / 멀티 서버 / 배포)
 
-- [ ] `MATCH-6` [Matching] 대기 중인 사용자가 매칭되면 즉시 알림을 받고 싶다
+- [ ] `MATCH-5` [Matching] 대기 중인 사용자가 매칭되면 즉시 알림을 받고 싶다
   - **현재 문제**: 폴링 방식으로 최대 3초 딜레이 발생
   - **해결**: WebSocket으로 매칭 대기 → 매칭 시 서버에서 즉시 push
   - **API**: `WS /ws/matching/{user_id}` → 매칭 대기 및 알림
   - **✅ 인수 조건**: 매칭 즉시 양쪽 사용자에게 알림
-
-- [ ] `MATCH-7` [Matching] 서버가 여러 대일 때도 매칭 알림이 전달되어야 한다
-  - **해결**: Redis Pub/Sub으로 매칭 알림 브로드캐스트
-  - **구조**: `User A 매칭 요청 → User B 매칭됨 → Redis Pub → User B의 서버 → WebSocket 알림`
-  - **✅ 인수 조건**: 다른 서버에서 대기 중인 사용자에게도 매칭 알림
-
-- [ ] `MATCH-8` [Matching] 배포 후에도 유저 상태가 정리되어야 한다
-  - **현재 문제**: 배포 시 인메모리 상태 손실, Redis 상태는 남음
-  - **해결**: CHATTING 상태에 TTL 추가 + 프론트 heartbeat로 갱신
-  - **✅ 인수 조건**: 5분간 heartbeat 없으면 상태 자동 만료
 
 ---
 
@@ -302,51 +282,67 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **API**: `POST /chat/{room_id}/rate` → 평가 제출
   - **✅ 인수 조건**: 1-5점 별점, 선택적 피드백, 채팅방당 1회만 평가 가능
 
-#### 인프라 (멀티 서버 / 배포)
+### Week 3-4: SEO + 커뮤니티
 
-- [ ] `CHAT-9` [Chat] 서버가 여러 대일 때도 채팅 메시지가 전달되어야 한다
-  - **현재 문제**: `ConnectionManager`가 인메모리라 서버 간 브로드캐스트 불가
-  - **해결**: Redis Pub/Sub으로 메시지 브로드캐스트
-  - **구조**: `User A (Server 1) → Redis Pub → Server 2 → User B`
-  - **✅ 인수 조건**: 다른 서버에 연결된 사용자에게도 메시지 전달
+> **목표**: SEO를 통한 자연 유입 + MBTI 콘텐츠로 바이럴 유도
 
-- [ ] `CHAT-10` [Chat] 배포 시 WebSocket 연결이 끊겨도 자동 재연결되어야 한다
-  - **현재 문제**: 배포 시 모든 WebSocket 연결 끊김, 사용자가 수동 새로고침 필요
-  - **해결 (Frontend)**: WebSocket `onclose` 시 자동 재연결 로직
-  - **✅ 인수 조건**: 연결 끊김 후 3초 내 자동 재연결, 재연결 시 히스토리 유지
+#### Community Domain (커뮤니티 - SEO 핵심)
 
-### Week 4: 그로스 해킹
+> **컨셉**: MBTI 기반 찬반 투표 / MBTI 맞추기 / 유명인 MBTI 투표
+> **SEO 전략**: 게시글마다 고유 URL → 검색 노출 → 자연 유입
 
-> **목표**: 서비스가 스스로 확산되고, 누군가는 실제로 돈을 지불하는지 검증
+##### 기본 게시판 기능
 
-#### Referral Domain (레퍼럴)
+- [ ] `COMM-1` [Community] 사용자로서, MBTI 사연을 올리고 싶다
+  - **Domain**: `Post` (id, author_id, title, content, post_type, mbti_context, created_at)
+  - **Domain**: `PostType` = 'story' | 'guess' | 'celebrity'
+  - **Repository**: `PostRepository` - 게시글 저장/조회
+  - **API**: `POST /community/posts` → 게시글 작성
+  - **API**: `GET /community/posts` → 게시글 목록 (페이지네이션)
+  - **API**: `GET /community/posts/{post_id}` → 게시글 상세 (SEO용 고유 URL)
+  - **✅ 인수 조건**: 제목/내용 작성, 작성자 MBTI 표시, 게시글 타입 선택
 
-- [ ] `REF-1` [Referral] 사용자로서, 친구 초대용 코드를 받고 싶다
-  - **Domain**: `ReferralCode` (code, user_id, created_at)
-  - **API**: `GET /referral/code` → 내 초대 코드
-  - **✅ 인수 조건**: 유니크 코드 생성, 사용자당 1개
+- [ ] `COMM-2` [Community] 사용자로서, 게시글 목록을 보고 싶다
+  - **UseCase**: `GetPostListUseCase` - 게시글 목록 조회
+  - **API**: `GET /community/posts?type={type}&page={page}`
+  - **✅ 인수 조건**: 타입별 필터링, 최신순 정렬, 투표 수 표시
 
-- [ ] `REF-2` [Referral] 신규 사용자로서, 초대 코드를 입력하면 보상을 받는다
-  - **Domain**: `ReferralReward` (referrer_id, referee_id, rewarded_at)
-  - **UseCase**: `UseReferralCodeUseCase`
-  - **API**: `POST /referral/use` → 코드 사용
-  - **✅ 인수 조건**: 양쪽에 추가 매칭권 +1, 중복 사용 방지
+##### 찬반 투표 (MBTI 사연)
 
-- [ ] `REF-3` [Referral] 사용자로서, 내가 초대한 친구 수를 보고 싶다
-  - **API**: `GET /referral/stats` → 초대 현황
-  - **✅ 인수 조건**: 초대 수, 보상 내역
+- [ ] `COMM-3` [Community] 사용자로서, MBTI 사연에 찬반 투표를 하고 싶다
+  - **Domain**: `Vote` (id, post_id, user_id, vote_type='agree'|'disagree', created_at)
+  - **UseCase**: `VoteOnPostUseCase` - 찬반 투표
+  - **API**: `POST /community/posts/{post_id}/vote` → 찬반 투표
+  - **✅ 인수 조건**: 찬성/반대 선택, 중복 투표 방지, 실시간 집계
 
-#### Payment (최소 결제)
+##### MBTI 맞추기
 
-- [ ] `PAY-1` [Payment] 사용자로서, 추가 매칭권을 구매하고 싶다
-  - **Domain**: `MatchingTicket` (user_id, count, purchased_at)
-  - **UseCase**: `PurchaseTicketUseCase`
-  - **API**: `POST /payment/ticket` → 매칭권 구매
-  - **✅ 인수 조건**: 1,000원/회 결제, 매칭권 추가
+- [ ] `COMM-4` [Community] 사용자로서, 사연 주인공의 MBTI를 맞추고 싶다
+  - **Domain**: `MBTIGuess` (id, post_id, user_id, guessed_mbti, created_at)
+  - **UseCase**: `GuessPostMBTIUseCase` - MBTI 예측 투표
+  - **API**: `POST /community/posts/{post_id}/guess` → MBTI 예측
+  - **API**: `GET /community/posts/{post_id}/guess/result` → 예측 통계
+  - **✅ 인수 조건**: 16가지 MBTI 중 선택, 투표 통계 시각화, 정답 공개 기능
 
-- [ ] `PAY-2` [Payment] 사용자로서, 간편하게 결제하고 싶다
-  - **Adapter**: 결제 API 연동
-  - **✅ 인수 조건**: 실결제 처리, 결제 내역 저장
+##### 유명인 MBTI 투표
+
+- [ ] `COMM-5` [Community] 사용자로서, 유명인의 MBTI를 투표하고 싶다
+  - **Domain**: `Celebrity` (id, name, image_url, description, created_at)
+  - **Domain**: `CelebrityMBTIVote` (id, celebrity_id, user_id, voted_mbti, created_at)
+  - **UseCase**: `VoteCelebrityMBTIUseCase` - 유명인 MBTI 투표
+  - **API**: `GET /community/celebrities` → 유명인 목록
+  - **API**: `POST /community/celebrities/{celebrity_id}/vote` → MBTI 투표
+  - **API**: `GET /community/celebrities/{celebrity_id}/result` → 투표 결과
+  - **✅ 인수 조건**: 유명인별 투표 페이지, MBTI별 투표 비율 차트
+
+##### 댓글 기능
+
+- [ ] `COMM-6` [Community] 사용자로서, 게시글에 댓글을 달고 싶다
+  - **Domain**: `Comment` (id, post_id, author_id, content, created_at)
+  - **UseCase**: `AddCommentUseCase` - 댓글 작성
+  - **API**: `POST /community/posts/{post_id}/comments` → 댓글 작성
+  - **API**: `GET /community/posts/{post_id}/comments` → 댓글 목록
+  - **✅ 인수 조건**: 댓글 작성, 작성자 MBTI 표시, 시간순 정렬
 
 ---
 
@@ -355,7 +351,8 @@ Person C,D ─→ 버그 픽스, UX 개선
 | KR | 목표 | 측정 방법 |
 |----|------|----------|
 | 가입자 | 100명 | User 테이블 count |
-| 레퍼럴 유입 | 20명+ | ReferralReward 테이블 count |
+| 검색 유입 | 50명+ | Google Analytics 오가닉 트래픽 |
 | WAU | 20명+ | 주간 로그인 유저 |
 | 대화 지속률 | 50%+ | 매칭 후 5개 이상 메시지 교환 비율 |
-| 결제 유저 | 1명+ | Payment 테이블 count |
+| 게시글 수 | 30개+ | Post 테이블 count |
+| 투표 참여율 | 30%+ | 게시글 조회 대비 투표 비율 |
