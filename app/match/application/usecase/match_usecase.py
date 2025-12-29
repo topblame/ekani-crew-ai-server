@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from app.match.application.port.output.chat_room_port import ChatRoomPort
+from app.match.application.port.output.match_notification_port import MatchNotificationPort
 from app.match.application.service.match_service import MatchService
 from app.shared.vo.mbti import MBTI
 from app.match.domain.match_ticket import MatchTicket
@@ -18,12 +19,14 @@ class MatchUseCase:
         self,
         match_queue_port: MatchQueuePort,
         chat_room_port: ChatRoomPort,
-        match_state_port: Optional[MatchStatePort] = None
+        match_state_port: Optional[MatchStatePort] = None,
+        match_notification_port: Optional[MatchNotificationPort] = None,
     ):
         self.match_queue = match_queue_port
         self.match_service = MatchService(match_queue_port)
         self.chat_room_port = chat_room_port
         self.match_state = match_state_port
+        self.match_notification_port = match_notification_port
 
     async def request_match(self, user_id: str, mbti: MBTI, level: int = 1) -> dict:
         """
@@ -81,7 +84,7 @@ class MatchUseCase:
             room_id = str(uuid.uuid4())
             timestamp = datetime.now().isoformat()
 
-            match_payload = {
+            chat_payload = {
                 "roomId": room_id,
                 "users": [
                     {"userId": my_ticket.user_id, "mbti": my_ticket.mbti.value},
@@ -91,7 +94,7 @@ class MatchUseCase:
             }
 
             # 3. [MATCH-3] Chat 도메인으로 데이터 전송 (비동기 처리 가능)
-            await self.chat_room_port.create_chat_room(match_payload)
+            await self.chat_room_port.create_chat_room(chat_payload)
 
             # 4. Set matched state for both users (with expiration)
             if self.match_state:
@@ -109,12 +112,27 @@ class MatchUseCase:
                     partner_id=my_ticket.user_id,
                     expire_seconds=self.MATCH_EXPIRE_SECONDS
                 )
+            
+            # 5. Notify partner via WebSocket
+            if self.match_notification_port:
+                partner_payload = {
+                    "status": "matched",
+                    "message": "매칭이 성사되었습니다!",
+                    "roomId": room_id,
+                    "my_mbti": partner_ticket.mbti.value,
+                    "partner": {
+                        "user_id": my_ticket.user_id,
+                        "mbti": my_ticket.mbti.value
+                    }
+                }
+                await self.match_notification_port.notify_match_success(partner_ticket.user_id, partner_payload)
 
+            # 6. Return response to the requester
             return {
                 "status": "matched",
                 "message": "매칭이 성사되었습니다!",
-                "roomId": room_id,  # 클라이언트에게도 방 번호 전달
-                "my_mbti": mbti.value,
+                "roomId": room_id,
+                "my_mbti": my_ticket.mbti.value,
                 "partner": {
                     "user_id": partner_ticket.user_id,
                     "mbti": partner_ticket.mbti.value

@@ -54,6 +54,15 @@ class ConnectionManager:
             for connection in self.active_connections[room_id]:
                 await connection.send_text(message)
 
+    async def send_to_user(self, user_id: str, message: str):
+        """Send a message to a specific user."""
+        if user_id in self.user_connections:
+            _room_id, websocket = self.user_connections[user_id]
+            await websocket.send_text(message)
+            print(f"[ConnectionManager] Sent message to user {user_id}")
+        else:
+            print(f"[ConnectionManager] User {user_id} not found for sending message.")
+
 
 # 싱글톤 인스턴스
 manager = ConnectionManager()

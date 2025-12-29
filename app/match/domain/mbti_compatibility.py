@@ -57,9 +57,6 @@ class MBTICompatibility:
             target_set.update(average_matches)
         elif level >= 4:
             target_set.update(all_mbtis)
-            
-        # 자기 자신은 매칭 대상에서 제외
-        target_set.discard(my_mbti)
 
         return [MBTI(m) for m in list(target_set)]
 
