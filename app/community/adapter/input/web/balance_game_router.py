@@ -1,14 +1,30 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.community.application.port.balance_game_repository_port import BalanceGameRepositoryPort
 from app.community.application.port.balance_vote_repository_port import BalanceVoteRepositoryPort
+from app.community.application.port.comment_repository_port import CommentRepositoryPort
 from app.community.application.use_case.vote_balance_game_use_case import VoteBalanceGameUseCase
 from app.community.application.use_case.get_balance_result_use_case import GetBalanceResultUseCase
+from app.community.application.use_case.add_balance_game_comment_use_case import (
+    AddBalanceGameCommentUseCase,
+)
+from app.community.application.use_case.get_balance_game_comments_use_case import (
+    GetBalanceGameCommentsUseCase,
+)
 from app.community.domain.balance_game import VoteChoice
 from app.community.infrastructure.repository.mysql_balance_game_repository import MySQLBalanceGameRepository
 from app.community.infrastructure.repository.mysql_balance_vote_repository import MySQLBalanceVoteRepository
+from app.community.infrastructure.repository.mysql_comment_repository import (
+    MySQLCommentRepository,
+)
+from app.user.application.port.user_repository_port import UserRepositoryPort
+from app.user.infrastructure.repository.mysql_user_repository import (
+    MySQLUserRepository,
+)
 from config.database import get_db
 
 
@@ -21,6 +37,14 @@ def get_balance_game_repository(db: Session = Depends(get_db)) -> BalanceGameRep
 
 def get_balance_vote_repository(db: Session = Depends(get_db)) -> BalanceVoteRepositoryPort:
     return MySQLBalanceVoteRepository(db)
+
+
+def get_comment_repository(db: Session = Depends(get_db)) -> CommentRepositoryPort:
+    return MySQLCommentRepository(db)
+
+
+def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryPort:
+    return MySQLUserRepository(db)
 
 
 class BalanceGameResponse(BaseModel):
@@ -141,3 +165,98 @@ def get_balance_result(
         right_percentage=result.right_percentage,
         mbti_breakdown=mbti_breakdown,
     )
+
+
+# ================= Comment Endpoints =================
+
+
+class CreateBalanceGameCommentRequest(BaseModel):
+    author_id: str
+    content: str
+
+
+class BalanceGameCommentResponse(BaseModel):
+    id: str
+    game_id: str
+    author_id: str
+    author_mbti: str | None
+    content: str
+    created_at: datetime
+
+
+class BalanceGameCommentListResponse(BaseModel):
+    items: list[BalanceGameCommentResponse]
+
+
+@balance_game_router.post(
+    "/balance/{game_id}/comments", status_code=status.HTTP_201_CREATED
+)
+def create_balance_game_comment(
+    game_id: str,
+    request: CreateBalanceGameCommentRequest,
+    game_repo: BalanceGameRepositoryPort = Depends(get_balance_game_repository),
+    comment_repo: CommentRepositoryPort = Depends(get_comment_repository),
+) -> BalanceGameCommentResponse:
+    """밸런스 게임 댓글 작성"""
+    use_case = AddBalanceGameCommentUseCase(
+        comment_repository=comment_repo,
+        balance_game_repository=game_repo,
+    )
+
+    try:
+        comment_id = use_case.execute(
+            game_id=game_id,
+            author_id=request.author_id,
+            content=request.content,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+    return BalanceGameCommentResponse(
+        id=comment_id,
+        game_id=game_id,
+        author_id=request.author_id,
+        author_mbti=None,
+        content=request.content,
+        created_at=datetime.now(),
+    )
+
+
+@balance_game_router.get("/balance/{game_id}/comments")
+def get_balance_game_comments(
+    game_id: str,
+    game_repo: BalanceGameRepositoryPort = Depends(get_balance_game_repository),
+    comment_repo: CommentRepositoryPort = Depends(get_comment_repository),
+    user_repo: UserRepositoryPort = Depends(get_user_repository),
+) -> BalanceGameCommentListResponse:
+    """밸런스 게임 댓글 목록 조회"""
+    use_case = GetBalanceGameCommentsUseCase(
+        comment_repository=comment_repo,
+        balance_game_repository=game_repo,
+        user_repository=user_repo,
+    )
+
+    try:
+        comments = use_case.execute(game_id=game_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+    items = [
+        BalanceGameCommentResponse(
+            id=comment.id,
+            game_id=comment.game_id,
+            author_id=comment.author_id,
+            author_mbti=comment.author_mbti,
+            content=comment.content,
+            created_at=comment.created_at,
+        )
+        for comment in comments
+    ]
+
+    return BalanceGameCommentListResponse(items=items)

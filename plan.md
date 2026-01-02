@@ -341,6 +341,16 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **API**: `GET /community/posts/{post_id}/comments` → 댓글 목록
   - **✅ 인수 조건**: 댓글 작성, 작성자 MBTI 표시, 시간순 정렬
 
+- [x] `COMM-6` [Community] 사용자로서, 밸런스 게임에 댓글을 달고 싶다
+  - **Domain 확장**: `Comment` (id, target_type, target_id, author_id, content, created_at)
+    - `target_type`: "post" | "balance_game"
+    - `target_id`: post_id 또는 game_id
+  - **UseCase 확장**: `AddCommentUseCase` - target_type 파라미터 추가
+  - **UseCase 확장**: `GetCommentsUseCase` - target_type 파라미터 추가
+  - **API**: `POST /community/balance/{game_id}/comments` → 밸런스 게임 댓글 작성
+  - **API**: `GET /community/balance/{game_id}/comments` → 밸런스 게임 댓글 목록
+  - **✅ 인수 조건**: 밸런스 게임 댓글 작성, 작성자 MBTI 표시, 시간순 정렬, 기존 게시글 댓글 기능 유지
+
 ---
 
 ## 성공 지표 체크리스트

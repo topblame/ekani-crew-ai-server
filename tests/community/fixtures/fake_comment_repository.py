@@ -1,5 +1,5 @@
 from app.community.application.port.comment_repository_port import CommentRepositoryPort
-from app.community.domain.comment import Comment
+from app.community.domain.comment import Comment, CommentTargetType
 
 
 class FakeCommentRepository(CommentRepositoryPort):
@@ -12,8 +12,28 @@ class FakeCommentRepository(CommentRepositoryPort):
         self._comments[comment.id] = comment
 
     def find_by_post_id(self, post_id: str) -> list[Comment]:
-        comments = [c for c in self._comments.values() if c.post_id == post_id]
-        return sorted(comments, key=lambda c: c.created_at)
+        return self.find_by_target("post", post_id)
 
     def count_by_post_id(self, post_id: str) -> int:
-        return len([c for c in self._comments.values() if c.post_id == post_id])
+        return self.count_by_target("post", post_id)
+
+    def find_by_target(
+        self, target_type: CommentTargetType, target_id: str
+    ) -> list[Comment]:
+        comments = [
+            c
+            for c in self._comments.values()
+            if c.target_type == target_type and c.target_id == target_id
+        ]
+        return sorted(comments, key=lambda c: c.created_at)
+
+    def count_by_target(
+        self, target_type: CommentTargetType, target_id: str
+    ) -> int:
+        return len(
+            [
+                c
+                for c in self._comments.values()
+                if c.target_type == target_type and c.target_id == target_id
+            ]
+        )
