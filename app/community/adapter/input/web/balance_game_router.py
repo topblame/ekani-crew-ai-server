@@ -196,6 +196,7 @@ def create_balance_game_comment(
     request: CreateBalanceGameCommentRequest,
     game_repo: BalanceGameRepositoryPort = Depends(get_balance_game_repository),
     comment_repo: CommentRepositoryPort = Depends(get_comment_repository),
+    user_repo: UserRepositoryPort = Depends(get_user_repository),
 ) -> BalanceGameCommentResponse:
     """밸런스 게임 댓글 작성"""
     use_case = AddBalanceGameCommentUseCase(
@@ -215,11 +216,15 @@ def create_balance_game_comment(
             detail=str(e),
         )
 
+    # 작성자 MBTI 조회
+    user = user_repo.find_by_id(request.author_id)
+    author_mbti = user.mbti.value if user and user.mbti else None
+
     return BalanceGameCommentResponse(
         id=comment_id,
         game_id=game_id,
         author_id=request.author_id,
-        author_mbti=None,
+        author_mbti=author_mbti,
         content=request.content,
         created_at=datetime.now(),
     )
