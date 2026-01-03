@@ -62,14 +62,11 @@ def create_topic(
 @topic_router.get("/topics/current")
 def get_current_topic(
     topic_repo: TopicRepositoryPort = Depends(get_topic_repository),
-) -> TopicResponse:
+) -> TopicResponse | None:
     """현재 활성 토픽 조회 (게시판 헤더용)"""
     topic = topic_repo.find_current_active()
     if not topic:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="현재 활성화된 토픽이 없습니다",
-        )
+        return None
 
     return TopicResponse(
         id=topic.id,
