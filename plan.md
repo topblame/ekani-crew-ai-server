@@ -351,6 +351,22 @@ Person C,D ─→ 버그 픽스, UX 개선
   - **API**: `GET /community/balance/{game_id}/comments` → 밸런스 게임 댓글 목록
   - **✅ 인수 조건**: 밸런스 게임 댓글 작성, 작성자 MBTI 표시, 시간순 정렬, 기존 게시글 댓글 기능 유지
 
+- [x] `COMM-7` [Community] 사용자로서, 밸런스 게임 목록과 상세를 보고 싶다
+  - **Domain 확장**: `BalanceGame` - created_at 기준 한 달 경과 여부로 참여 가능 판단
+  - **UseCase**: `GetBalanceGameListUseCase` - 밸런스 게임 목록 조회 (댓글 수, 투표 비율 포함)
+  - **UseCase**: `GetBalanceGameByIdUseCase` - 특정 밸런스 게임 상세 조회 (내용, 댓글, 결과)
+  - **UseCase 확장**: `VoteBalanceGameUseCase` - 한 달 경과 시 투표 불가
+  - **UseCase 확장**: `AddBalanceGameCommentUseCase` - 한 달 경과 시 댓글 불가
+  - **API**: `GET /community/balance` → 밸런스 게임 목록 (페이지네이션)
+    - 응답: id, question, option_left, option_right, left_percentage, right_percentage, comment_count, is_votable
+  - **API**: `GET /community/balance/{game_id}` → 밸런스 게임 상세 (결과 + 댓글)
+    - 응답: 게임 상세, 투표 결과, 댓글 목록, is_votable
+  - **✅ 인수 조건**:
+    - 목록에서 각 게임의 투표 퍼센티지, 댓글 수 표시
+    - 클릭 시 상세보기 (내용 + 결과 + 댓글)
+    - 한 달 이내: 투표/댓글 가능
+    - 한 달 경과: 조회만 가능 (읽기 전용)
+
 ---
 
 ## 성공 지표 체크리스트

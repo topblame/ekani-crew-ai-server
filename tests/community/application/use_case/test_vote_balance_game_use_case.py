@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.community.domain.balance_game import BalanceGame, VoteChoice
 from app.community.application.use_case.vote_balance_game_use_case import VoteBalanceGameUseCase
@@ -129,6 +129,29 @@ class TestVoteBalanceGameUseCase:
         with pytest.raises(ValueError, match="비활성화된 게임입니다"):
             use_case.execute(
                 game_id="game-inactive",
+                user_id="user-123",
+                user_mbti="INTJ",
+                choice=VoteChoice.LEFT,
+            )
+
+    def test_vote_on_expired_game_raises_error(self, use_case, game_repository):
+        """한 달이 경과한 게임에 투표 시 에러 발생"""
+        # Given: 35일 전에 생성된 게임
+        expired_game = BalanceGame(
+            id="game-expired",
+            question="만료된 게임",
+            option_left="왼쪽",
+            option_right="오른쪽",
+            week_of="2024-W01",
+            is_active=True,  # 아직 활성 상태
+            created_at=datetime.now() - timedelta(days=35),
+        )
+        game_repository.save(expired_game)
+
+        # When/Then: 만료된 게임에 투표하면 에러 발생
+        with pytest.raises(ValueError, match="투표 기간이 종료되었습니다"):
+            use_case.execute(
+                game_id="game-expired",
                 user_id="user-123",
                 user_mbti="INTJ",
                 choice=VoteChoice.LEFT,

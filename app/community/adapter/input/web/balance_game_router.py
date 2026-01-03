@@ -15,6 +15,12 @@ from app.community.application.use_case.add_balance_game_comment_use_case import
 from app.community.application.use_case.get_balance_game_comments_use_case import (
     GetBalanceGameCommentsUseCase,
 )
+from app.community.application.use_case.get_balance_game_list_use_case import (
+    GetBalanceGameListUseCase,
+)
+from app.community.application.use_case.get_balance_game_by_id_use_case import (
+    GetBalanceGameByIdUseCase,
+)
 from app.community.domain.balance_game import VoteChoice
 from app.community.infrastructure.repository.mysql_balance_game_repository import MySQLBalanceGameRepository
 from app.community.infrastructure.repository.mysql_balance_vote_repository import MySQLBalanceVoteRepository
@@ -54,6 +60,47 @@ class BalanceGameResponse(BaseModel):
     option_right: str
     week_of: str
     is_active: bool
+
+
+class BalanceGameListItemResponse(BaseModel):
+    id: str
+    question: str
+    option_left: str
+    option_right: str
+    left_percentage: float
+    right_percentage: float
+    comment_count: int
+    is_votable: bool
+    week_of: str
+    created_at: datetime
+
+
+class BalanceGameListResponse(BaseModel):
+    items: list[BalanceGameListItemResponse]
+
+
+class BalanceGameDetailCommentResponse(BaseModel):
+    id: str
+    author_id: str
+    author_mbti: str | None
+    content: str
+    created_at: datetime
+
+
+class BalanceGameDetailResponse(BaseModel):
+    id: str
+    question: str
+    option_left: str
+    option_right: str
+    week_of: str
+    total_votes: int
+    left_votes: int
+    right_votes: int
+    left_percentage: float
+    right_percentage: float
+    comments: list[BalanceGameDetailCommentResponse]
+    is_votable: bool
+    created_at: datetime
 
 
 class VoteRequest(BaseModel):
@@ -265,3 +312,92 @@ def get_balance_game_comments(
     ]
 
     return BalanceGameCommentListResponse(items=items)
+
+
+# ================= List & Detail Endpoints =================
+
+
+@balance_game_router.get("/balance")
+def get_balance_game_list(
+    game_repo: BalanceGameRepositoryPort = Depends(get_balance_game_repository),
+    vote_repo: BalanceVoteRepositoryPort = Depends(get_balance_vote_repository),
+    comment_repo: CommentRepositoryPort = Depends(get_comment_repository),
+) -> BalanceGameListResponse:
+    """밸런스 게임 목록 조회"""
+    use_case = GetBalanceGameListUseCase(
+        balance_game_repository=game_repo,
+        balance_vote_repository=vote_repo,
+        comment_repository=comment_repo,
+    )
+
+    games = use_case.execute()
+
+    items = [
+        BalanceGameListItemResponse(
+            id=game.id,
+            question=game.question,
+            option_left=game.option_left,
+            option_right=game.option_right,
+            left_percentage=game.left_percentage,
+            right_percentage=game.right_percentage,
+            comment_count=game.comment_count,
+            is_votable=game.is_votable,
+            week_of=game.week_of,
+            created_at=game.created_at,
+        )
+        for game in games
+    ]
+
+    return BalanceGameListResponse(items=items)
+
+
+@balance_game_router.get("/balance/{game_id}")
+def get_balance_game_detail(
+    game_id: str,
+    game_repo: BalanceGameRepositoryPort = Depends(get_balance_game_repository),
+    vote_repo: BalanceVoteRepositoryPort = Depends(get_balance_vote_repository),
+    comment_repo: CommentRepositoryPort = Depends(get_comment_repository),
+    user_repo: UserRepositoryPort = Depends(get_user_repository),
+) -> BalanceGameDetailResponse:
+    """밸런스 게임 상세 조회"""
+    use_case = GetBalanceGameByIdUseCase(
+        balance_game_repository=game_repo,
+        balance_vote_repository=vote_repo,
+        comment_repository=comment_repo,
+        user_repository=user_repo,
+    )
+
+    try:
+        detail = use_case.execute(game_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+    comments = [
+        BalanceGameDetailCommentResponse(
+            id=comment.id,
+            author_id=comment.author_id,
+            author_mbti=comment.author_mbti,
+            content=comment.content,
+            created_at=comment.created_at,
+        )
+        for comment in detail.comments
+    ]
+
+    return BalanceGameDetailResponse(
+        id=detail.id,
+        question=detail.question,
+        option_left=detail.option_left,
+        option_right=detail.option_right,
+        week_of=detail.week_of,
+        total_votes=detail.total_votes,
+        left_votes=detail.left_votes,
+        right_votes=detail.right_votes,
+        left_percentage=detail.left_percentage,
+        right_percentage=detail.right_percentage,
+        comments=comments,
+        is_votable=detail.is_votable,
+        created_at=detail.created_at,
+    )

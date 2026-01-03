@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 
 from app.community.application.port.balance_game_repository_port import (
     BalanceGameRepositoryPort,
@@ -9,6 +10,8 @@ from app.community.domain.comment import Comment
 
 class AddBalanceGameCommentUseCase:
     """밸런스 게임 댓글 작성 유스케이스"""
+
+    COMMENTABLE_DAYS = 30  # 댓글 작성 가능 기간 (일)
 
     def __init__(
         self,
@@ -25,6 +28,10 @@ class AddBalanceGameCommentUseCase:
         if game is None:
             raise ValueError("밸런스 게임을 찾을 수 없습니다")
 
+        # 댓글 작성 기간 확인 (30일 이내)
+        if not self._is_commentable(game.created_at):
+            raise ValueError("댓글 작성 기간이 종료되었습니다")
+
         # 댓글 생성 및 저장
         comment = Comment(
             id=str(uuid.uuid4()),
@@ -36,3 +43,8 @@ class AddBalanceGameCommentUseCase:
         self._comment_repository.save(comment)
 
         return comment.id
+
+    def _is_commentable(self, created_at: datetime) -> bool:
+        """댓글 작성 가능 여부를 판단한다 (생성 후 30일 이내)"""
+        cutoff = datetime.now() - timedelta(days=self.COMMENTABLE_DAYS)
+        return created_at > cutoff

@@ -19,3 +19,7 @@ class FakeBalanceGameRepository(BalanceGameRepositoryPort):
             if game.is_active:
                 return game
         return None
+
+    def find_all(self) -> list[BalanceGame]:
+        games = list(self._games.values())
+        return sorted(games, key=lambda g: g.created_at, reverse=True)

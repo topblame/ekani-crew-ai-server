@@ -20,3 +20,8 @@ class BalanceGameRepositoryPort(ABC):
     def find_current_active(self) -> BalanceGame | None:
         """현재 활성화된 밸런스 게임을 조회한다"""
         pass
+
+    @abstractmethod
+    def find_all(self) -> list[BalanceGame]:
+        """모든 밸런스 게임을 조회한다 (최신순 정렬)"""
+        pass

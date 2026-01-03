@@ -47,6 +47,14 @@ class MySQLBalanceGameRepository(BalanceGameRepositoryPort):
 
         return self._to_domain(game_model)
 
+    def find_all(self) -> list[BalanceGame]:
+        """모든 밸런스 게임을 조회한다 (최신순 정렬)"""
+        game_models = self._db.query(BalanceGameModel).order_by(
+            BalanceGameModel.created_at.desc()
+        ).all()
+
+        return [self._to_domain(model) for model in game_models]
+
     def _to_domain(self, model: BalanceGameModel) -> BalanceGame:
         """ORM 모델을 도메인 객체로 변환한다"""
         return BalanceGame(

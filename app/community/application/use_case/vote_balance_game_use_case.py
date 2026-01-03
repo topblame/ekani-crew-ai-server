@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 
 from app.community.application.port.balance_game_repository_port import BalanceGameRepositoryPort
 from app.community.application.port.balance_vote_repository_port import BalanceVoteRepositoryPort
@@ -7,6 +8,8 @@ from app.community.domain.balance_game import BalanceVote, VoteChoice
 
 class VoteBalanceGameUseCase:
     """밸런스 게임 투표 유스케이스"""
+
+    VOTABLE_DAYS = 30  # 투표 가능 기간 (일)
 
     def __init__(
         self,
@@ -33,6 +36,10 @@ class VoteBalanceGameUseCase:
         if not game.is_active:
             raise ValueError("비활성화된 게임입니다")
 
+        # 투표 기간 확인 (30일 이내)
+        if not self._is_votable(game.created_at):
+            raise ValueError("투표 기간이 종료되었습니다")
+
         # 중복 투표 확인
         existing_vote = self._vote_repository.find_by_game_and_user(game_id, user_id)
         if existing_vote is not None:
@@ -49,3 +56,8 @@ class VoteBalanceGameUseCase:
         self._vote_repository.save(vote)
 
         return vote.id
+
+    def _is_votable(self, created_at: datetime) -> bool:
+        """투표 가능 여부를 판단한다 (생성 후 30일 이내)"""
+        cutoff = datetime.now() - timedelta(days=self.VOTABLE_DAYS)
+        return created_at > cutoff
