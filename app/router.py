@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from app.auth.adapter.input.web.google_oauth_router import google_oauth_router
 from app.match.adapter.input.web.match_router import match_router
 from app.match.adapter.input.web.match_websocket_router import match_websocket_router
+from app.auth.infrastructure.model.oauth_identity_model import OAuthIdentityModel  # noqa: F401
 from app.user.infrastructure.model.user_model import UserModel  # noqa: F401
 from app.converter.adapter.input.web.converter_router import converter_router
 from app.user.adapter.input.web.user_router import user_router
@@ -18,8 +19,12 @@ from app.chat.infrastructure.model.chat_room_model import ChatRoomModel  # noqa:
 from app.chat.infrastructure.model.chat_message_model import ChatMessageModel  # noqa: F401
 from app.community.adapter.input.web.topic_router import topic_router
 from app.community.adapter.input.web.post_router import post_router
+from app.community.adapter.input.web.balance_game_router import balance_game_router
 from app.community.infrastructure.model.topic_model import TopicModel  # noqa: F401
 from app.community.infrastructure.model.post_model import PostModel  # noqa: F401
+from app.community.infrastructure.model.balance_game_model import BalanceGameModel  # noqa: F401
+from app.community.infrastructure.model.balance_vote_model import BalanceVoteModel  # noqa: F401
+from app.community.infrastructure.model.comment_model import CommentModel  # noqa: F401
 def setup_routers(app: FastAPI) -> None:
     """모든 라우터를 FastAPI 앱에 등록한다."""
     app.include_router(google_oauth_router, prefix="/auth", tags=["Auth"])
@@ -32,4 +37,5 @@ def setup_routers(app: FastAPI) -> None:
     app.include_router(match_websocket_router, tags=["Match"])
     app.include_router(topic_router, prefix="/community", tags=["Community"])
     app.include_router(post_router, prefix="/community", tags=["Community"])
+    app.include_router(balance_game_router, prefix="/community", tags=["Community"])
 
