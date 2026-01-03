@@ -50,13 +50,9 @@ class MatchUseCase:
                 }
 
         if await self.match_queue.is_user_in_queue(user_id, mbti):
-            wait_count = await self.get_waiting_count(mbti)
-            return {
-                "status": "already_waiting",
-                "message": "이미 대기열에 등록된 유저입니다.",
-                "my_mbti": mbti.value,
-                "wait_count": wait_count
-            }
+            # 이미 대기열에 있는 유저가 다른 레벨로 재요청한 경우,
+            # 기존 대기열에서 제거하고 새로운 요청으로 계속 진행합니다.
+            await self.match_queue.remove(user_id, mbti)
 
         # 도메인 객체 생성
         my_ticket = MatchTicket(user_id=user_id, mbti=mbti)
